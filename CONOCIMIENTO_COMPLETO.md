@@ -20,6 +20,7 @@
 - **Automatización de Bancos (Scraping/Imap):** 
   - `puppeteer` para extraer y verificar recibos del banco directamente navegando por interfaces web cuando es necesario.
   - `imap-simple` y `mailparser` para leer correos de notificaciones del banco y registrar automáticamente gastos recurrentes.
+  - **Macrodroid Webhooks**: Un endpoint de PocketBase (`pb_hooks/macrodroid.pb.js`) diseñado para recibir peticiones HTTP enviadas por Macrodroid desde el móvil del usuario al detectar una notificación bancaria. Extrae automáticamente el importe mediante RegEx, identifica si es gasto o ingreso, implementa control de idempotencia (anti-duplicados por 5 minutos) y lo registra en la base de datos automáticamente.
 
 ### 📂 Estructura de la Base de Código
 ```text
