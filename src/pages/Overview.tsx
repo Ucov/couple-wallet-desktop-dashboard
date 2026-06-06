@@ -1,0 +1,448 @@
+import { useState, useEffect } from 'react'
+import { pb } from '@/lib/pocketbase'
+import { useOutletContext } from 'react-router-dom'
+import type { RecordModel } from 'pocketbase'
+import ExpenseAreaChart from '@/components/charts/ExpenseAreaChart'
+import CategoryDonutChart from '@/components/charts/CategoryDonutChart'
+import { TrendingUp, PieChart, Target, Settings as SettingsIcon, CheckCircle2 } from 'lucide-react'
+
+export default function Overview() {
+  const { user } = useOutletContext<{ user: RecordModel }>()
+  const [stats, setStats] = useState({ total: 0, userAPaid: 0, userBPaid: 0, mySplit: 50, partnerSplit: 50, balance: 0 })
+  const [profiles, setProfiles] = useState<{id: string, name: string, split: number}[]>([])
+  const [loading, setLoading] = useState(true)
+  const [chartData, setChartData] = useState<any[]>([])
+  const [donutData, setDonutData] = useState<any[]>([])
+
+  // ERP New States
+  const [budgets, setBudgets] = useState<RecordModel[]>([])
+  const [categories, setCategories] = useState<RecordModel[]>([])
+  const [currentMonthTotals, setCurrentMonthTotals] = useState<Record<string, number>>({})
+  
+  const [settleUpModalOpen, setSettleUpModalOpen] = useState(false)
+  const [settleLoading, setSettleLoading] = useState(false)
+  
+  const [budgetModalOpen, setBudgetModalOpen] = useState(false)
+  const [budgetForm, setBudgetForm] = useState({ category_id: '', amount: '' })
+
+  const fetchData = async () => {
+    try {
+      if (!user.couple_id) {
+        setLoading(false)
+        return
+      }
+
+      const coupleProfiles = await pb.collection('users').getFullList({
+        filter: `couple_id = "${user.couple_id}"`
+      })
+      const formattedProfiles = coupleProfiles.map(p => ({ id: p.id, name: p.name || 'Sin Nombre', split: p.split_percentage }))
+      setProfiles(formattedProfiles)
+
+      const mySplit = user.split_percentage || 50
+      const partnerSplit = formattedProfiles.find(p => p.id !== user.id)?.split || (100 - mySplit)
+
+      const expenses = await pb.collection('expenses').getFullList({
+        filter: `couple_id = "${user.couple_id}"`,
+        expand: 'category_id'
+      })
+      
+      const cats = await pb.collection('categories').getFullList({ sort: 'name' })
+      setCategories(cats)
+
+      let buds: RecordModel[] = []
+      try {
+        buds = await pb.collection('budgets').getFullList({
+          filter: `couple_id = "${user.couple_id}"`,
+          expand: 'category_id'
+        })
+      } catch(err) {
+        console.warn("Budgets collection might not be accessible yet", err)
+      }
+      setBudgets(buds)
+
+      // CALCULATE BALANCE
+      const userAId = formattedProfiles[0]?.id || user.id
+      const userBId = formattedProfiles[1]?.id || 'unknown'
+
+      let expectedUserANormal = 0
+      let expectedUserBNormal = 0
+      let userAPaidNormal = 0
+      let userBPaidNormal = 0
+      
+      let userARefundable = 0
+      let userBRefundable = 0
+
+      let userATransfersSent = 0
+      let userBTransfersSent = 0
+
+      const now = new Date()
+      const currentTotals: Record<string, number> = {}
+
+      expenses.forEach(e => {
+        const amt = Number(e.amount)
+        if (e.is_transfer) {
+          if (e.paid_by === userAId) userATransfersSent += amt
+          else if (e.paid_by === userBId) userBTransfersSent += amt
+        } else if (e.is_refundable) {
+          if (e.paid_by === userAId) userARefundable += amt
+          else if (e.paid_by === userBId) userBRefundable += amt
+        } else {
+          if (e.paid_by === userAId) userAPaidNormal += amt
+          else if (e.paid_by === userBId) userBPaidNormal += amt
+          
+          expectedUserANormal += amt * (mySplit / 100)
+          expectedUserBNormal += amt * (partnerSplit / 100)
+
+          // Budget calculation (current month only)
+          const d = new Date(e.date)
+          if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+             const catId = e.category_id || e.expand?.category_id?.id
+             if (catId) {
+               currentTotals[catId] = (currentTotals[catId] || 0) + amt
+             }
+          }
+        }
+      })
+
+      setCurrentMonthTotals(currentTotals)
+
+      let userABalance = expectedUserANormal - userAPaidNormal
+      userABalance += userBRefundable 
+      userABalance -= userARefundable 
+      userABalance -= userATransfersSent 
+      userABalance += userBTransfersSent 
+
+      const displayBalance = -userABalance
+      const totalUnsettledNormal = expectedUserANormal + expectedUserBNormal
+
+      setStats({ 
+        total: totalUnsettledNormal, 
+        userAPaid: userAPaidNormal, 
+        userBPaid: userBPaidNormal, 
+        mySplit, 
+        partnerSplit,
+        balance: displayBalance,
+        count: expenses.length
+      } as any)
+
+      // CHARTS
+      const months: Record<string, { date: string, userA: number, userB: number }> = {}
+      expenses.filter(e => !e.is_transfer && !e.is_refundable).forEach(e => {
+        const dateObj = new Date(e.date)
+        const monthYear = `${dateObj.toLocaleString('es-ES', { month: 'short' })} ${dateObj.getFullYear()}`
+        if (!months[monthYear]) months[monthYear] = { date: monthYear, userA: 0, userB: 0 }
+        
+        if (e.paid_by === userAId) months[monthYear].userA += Number(e.amount)
+        else if (e.paid_by === userBId) months[monthYear].userB += Number(e.amount)
+      })
+      setChartData(Object.values(months).reverse())
+
+      const donutCats: Record<string, number> = {}
+      expenses.filter(e => !e.is_transfer && !e.is_refundable).forEach(e => {
+        const catName = e.expand?.category_id?.name || 'Otros'
+        donutCats[catName] = (donutCats[catName] || 0) + Number(e.amount)
+      })
+      setDonutData(Object.entries(donutCats).map(([name, value], idx) => ({ 
+        name, 
+        value,
+        color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'][idx % 6]
+      })))
+      
+      setLoading(false)
+    } catch (err: any) {
+      setStats(prev => ({ ...prev, error: err.message }))
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [user.id])
+
+  const handleSettleUp = async () => {
+    setSettleLoading(true)
+    try {
+      const userAId = profiles[0]?.id || user.id
+      const userBId = profiles[1]?.id || 'unknown'
+      
+      // If stats.balance > 0, partner (userB) owes userA. Partner is paying userA.
+      // If stats.balance < 0, userA owes partner. userA is paying partner.
+      const paidById = stats.balance > 0 ? userBId : userAId
+      const amountToSettle = Math.abs(stats.balance)
+
+      await pb.collection('expenses').create({
+        concept: 'Liquidación de saldo',
+        amount: amountToSettle,
+        is_transfer: true,
+        date: new Date().toISOString(),
+        paid_by: paidById,
+        couple_id: user.couple_id
+      })
+
+      setSettleUpModalOpen(false)
+      await fetchData() // Refresh data to show balance at 0
+    } catch (error: any) {
+      alert("Error al liquidar: " + error.message)
+    } finally {
+      setSettleLoading(false)
+    }
+  }
+
+  const handleSaveBudget = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!budgetForm.category_id || !budgetForm.amount) return
+
+    try {
+      const existing = budgets.find(b => b.category_id === budgetForm.category_id)
+      if (existing) {
+        await pb.collection('budgets').update(existing.id, {
+          amount: Number(budgetForm.amount)
+        })
+      } else {
+        await pb.collection('budgets').create({
+          couple_id: user.couple_id,
+          category_id: budgetForm.category_id,
+          amount: Number(budgetForm.amount)
+        })
+      }
+      setBudgetModalOpen(false)
+      setBudgetForm({ category_id: '', amount: '' })
+      await fetchData()
+    } catch (error: any) {
+      alert("Error al guardar presupuesto: " + error.message)
+    }
+  }
+
+  if (loading) return <div className="text-zinc-500">Cargando resumen...</div>
+
+  const userA = profiles[0] || { id: user.id, name: 'Tú', split: stats.mySplit }
+  const userB = profiles[1] || { id: 'unknown', name: 'Pareja', split: stats.partnerSplit }
+
+  const userABalance = stats.balance
+
+  if ((stats as any).error) {
+    return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats as any).error}</div>
+  }
+
+  return (
+    <div className="space-y-6 pb-20">
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-emerald-950/50 text-emerald-500 rounded-2xl">
+                <TrendingUp size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Balance de {userA.name}</p>
+                <p className={`text-2xl font-black ${userABalance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {userABalance >= 0 ? '+' : ''}{userABalance.toFixed(2)} €
+                </p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {userABalance > 0 ? `${userB.name} le debe a ${userA.name}` : userABalance < 0 ? `${userA.name} le debe a ${userB.name}` : 'Cuentas saldadas'}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {Math.abs(userABalance) > 0.01 && (
+             <button 
+                onClick={() => setSettleUpModalOpen(true)}
+                className="mt-4 w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 px-4 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+             >
+                <CheckCircle2 size={18} className="text-emerald-400" />
+                Saldar Deuda
+             </button>
+          )}
+        </div>
+
+        <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg">
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-purple-950/50 text-purple-500 rounded-2xl">
+              <PieChart size={24} />
+            </div>
+            <div className="w-full">
+              <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Reparto Global</p>
+              <div className="flex justify-between mt-1 items-end">
+                <p className="text-2xl font-black text-white">{userA.split}% / {userB.split}%</p>
+              </div>
+              <div className="w-full bg-zinc-950 rounded-full h-1.5 mt-3 overflow-hidden flex">
+                <div className="bg-emerald-500 h-full" style={{ width: `${userA.split}%` }}></div>
+                <div className="bg-purple-500 h-full" style={{ width: `${userB.split}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* PRESUPUESTOS WIDGET */}
+        <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+             <div className="flex items-center gap-2 text-zinc-300 font-bold">
+               <Target size={18} className="text-amber-500" /> Control de Presupuestos
+             </div>
+             <button onClick={() => setBudgetModalOpen(true)} className="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-zinc-400 transition-colors">
+               <SettingsIcon size={16} />
+             </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+            {budgets.length === 0 ? (
+              <p className="text-xs text-zinc-500 text-center mt-4">No hay límites establecidos.</p>
+            ) : (
+              budgets.map(b => {
+                const cat = b.expand?.category_id
+                const spent = currentMonthTotals[b.category_id] || 0
+                const limit = b.amount
+                const percent = Math.min((spent / limit) * 100, 100)
+                const colorClass = percent < 75 ? 'bg-emerald-500' : percent < 95 ? 'bg-amber-500' : 'bg-red-500'
+                
+                const now = new Date()
+                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+                const currentDay = now.getDate()
+                const projected = (spent / Math.max(currentDay, 1)) * daysInMonth
+                
+                let forecastMsg = ''
+                let forecastClass = ''
+                // Only show forecast if we are past day 5 to avoid early-month spikes
+                if (currentDay > 5 || spent >= limit) {
+                  if (projected > limit && spent > 0) {
+                    const overBy = projected - limit
+                    forecastMsg = `Peligro: Proyección total de ${projected.toFixed(0)}€ a final de mes`
+                    forecastClass = 'text-amber-500 text-[10px] mt-1 font-bold flex items-center gap-1'
+                  } else if (spent > 0) {
+                    const saved = limit - projected
+                    forecastMsg = `Vas genial: Proyección de ahorro de ${saved.toFixed(0)}€ a final de mes`
+                    forecastClass = 'text-emerald-500 text-[10px] mt-1 flex items-center gap-1'
+                  }
+                }
+
+                return (
+                  <div key={b.id}>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="text-zinc-300 font-bold flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat?.color }}></span>
+                        {cat?.name}
+                      </span>
+                      <span className="text-zinc-400 font-mono">
+                        <span className={spent > limit ? 'text-red-400 font-bold' : ''}>{spent.toFixed(0)}€</span> / {limit.toFixed(0)}€
+                      </span>
+                    </div>
+                    <div className="w-full bg-zinc-950 rounded-full h-2 overflow-hidden flex">
+                      <div className={`${colorClass} h-full transition-all`} style={{ width: `${percent}%` }}></div>
+                    </div>
+                    {forecastMsg && (
+                      <p className={forecastClass}>
+                         {projected > limit ? '⚠️' : '✨'} {forecastMsg}
+                      </p>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-2 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg flex flex-col h-[400px]">
+          <h3 className="text-white font-bold mb-4">Evolución de Gastos ({userA.name} vs {userB.name})</h3>
+          <div className="flex-1 w-full h-full min-h-0">
+            {chartData.length > 0 ? <ExpenseAreaChart data={chartData} userA={userA.name} userB={userB.name} /> : <p className="text-zinc-500 text-sm">No hay suficientes datos</p>}
+          </div>
+        </div>
+        <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg flex flex-col h-[400px]">
+          <h3 className="text-white font-bold mb-4">Gastos por Categoría</h3>
+          <div className="flex-1 w-full h-full min-h-0">
+            {donutData.length > 0 ? <CategoryDonutChart data={donutData} /> : <p className="text-zinc-500 text-sm">No hay suficientes datos</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL SETTLE UP */}
+      {settleUpModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+              <CheckCircle2 className="text-emerald-400" /> Liquidar Deuda
+            </h2>
+            <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 mb-6">
+              <p className="text-zinc-300 leading-relaxed">
+                {userABalance > 0 
+                  ? `¿Confirmas que ${userB.name} te ha pagado ${Math.abs(userABalance).toFixed(2)}€ por Bizum/Efectivo para saldar las cuentas?`
+                  : `¿Confirmas que tú le has pagado ${Math.abs(userABalance).toFixed(2)}€ a ${userB.name} por Bizum/Efectivo para saldar las cuentas?`
+                }
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setSettleUpModalOpen(false)}
+                className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                disabled={settleLoading}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSettleUp}
+                disabled={settleLoading}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold transition-colors disabled:opacity-50"
+              >
+                {settleLoading ? 'Registrando...' : 'Confirmar Pago'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PRESUPUESTOS */}
+      {budgetModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-2xl font-bold text-white mb-6">Configurar Presupuesto</h2>
+            <form onSubmit={handleSaveBudget} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">Categoría</label>
+                <select 
+                  value={budgetForm.category_id}
+                  onChange={e => setBudgetForm({...budgetForm, category_id: e.target.value})}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 transition-colors"
+                >
+                  <option value="">Seleccionar categoría...</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">Límite Mensual (€)</label>
+                <input 
+                  type="number"
+                  step="1"
+                  min="1"
+                  value={budgetForm.amount}
+                  onChange={e => setBudgetForm({...budgetForm, amount: e.target.value})}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  placeholder="Ej. 300"
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <button 
+                  type="button" 
+                  onClick={() => setBudgetModalOpen(false)}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-xl font-bold transition-colors"
+                >
+                  Guardar Límite
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

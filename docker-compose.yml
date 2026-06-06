@@ -1,0 +1,7 @@
+services:
+  desktop-dashboard:
+    build: .
+    container_name: desktop-dashboard
+    restart: unless-stopped
+    ports:
+      - "3006:80"
