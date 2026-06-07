@@ -2,7 +2,7 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm config set strict-peer-dependencies false && pnpm install --ignore-scripts --no-frozen-lockfile
+RUN npm install -g pnpm && pnpm install --ignore-scripts --no-frozen-lockfile
 COPY . .
 RUN pnpm run build
 
