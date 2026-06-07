@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
-import { Repeat, Plus, Zap, Play, Pause, Trash2 } from 'lucide-react'
+import { Repeat, Plus, Zap, Play, Pause } from 'lucide-react'
 
 export default function Subscriptions() {
   const { user } = useOutletContext<{ user: RecordModel }>()
@@ -73,7 +73,7 @@ export default function Subscriptions() {
   const toggleStatus = async (sub: RecordModel) => {
     try {
       const newStatus = sub.status === 'active' ? 'paused' : 'active'
-      const data = await pb.collection('subscriptions').update(sub.id, {
+      await pb.collection('subscriptions').update(sub.id, {
         status: newStatus
       })
       setSubscriptions(subscriptions.map(s => s.id === sub.id ? { ...s, status: newStatus } : s))

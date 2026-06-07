@@ -306,7 +306,7 @@ export default function Overview() {
                 // Only show forecast if we are past day 5 to avoid early-month spikes
                 if (currentDay > 5 || spent >= limit) {
                   if (projected > limit && spent > 0) {
-                    const overBy = projected - limit
+                    // unused: const overBy = projected - limit
                     forecastMsg = `Peligro: Proyección total de ${projected.toFixed(0)}€ a final de mes`
                     forecastClass = 'text-amber-500 text-[10px] mt-1 font-bold flex items-center gap-1'
                   } else if (spent > 0) {

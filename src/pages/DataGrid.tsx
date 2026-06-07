@@ -43,33 +43,34 @@ export default function DataGrid() {
     setPartnerPersonal(p);
   }, [scannedItems]);
 
-  useEffect(() => {
-    async function fetchExpenses() {
-      try {
-        if (user?.couple_id) {
-          const data = await pb.collection('expenses').getFullList({
-            filter: `couple_id = "${user.couple_id}"`,
-            sort: '-date',
-            expand: 'category_id,paid_by'
-          })
-          setExpenses(data)
-          
-          const cats = await pb.collection('categories').getFullList({ sort: 'name' })
-          setCategories(cats)
+  const fetchExpenses = async () => {
+    try {
+      if (user?.couple_id) {
+        const data = await pb.collection('expenses').getFullList({
+          filter: `couple_id = "${user.couple_id}"`,
+          sort: '-date',
+          expand: 'category_id,paid_by'
+        })
+        setExpenses(data)
+        
+        const cats = await pb.collection('categories').getFullList({ sort: 'name' })
+        setCategories(cats)
 
-          try {
-            const rls = await pb.collection('rules').getFullList({
-              filter: `couple_id = "${user.couple_id}"`
-            })
-            setRules(rls)
-          } catch(e) {}
-        }
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
+        try {
+          const rls = await pb.collection('rules').getFullList({
+            filter: `couple_id = "${user.couple_id}"`
+          })
+          setRules(rls)
+        } catch(e) {}
       }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchExpenses()
   }, [user.couple_id])
 
@@ -231,7 +232,7 @@ export default function DataGrid() {
       setIsAdvancedSplit(true);
       
       // Auto-fill concept and category
-      setEditingExp(prev => ({
+      setEditingExp((prev: any) => ({
         ...(prev || {}),
         concept: result.merchant || prev?.concept || '',
         category_id: result.categoryId || prev?.category_id || categories[0]?.id
