@@ -11,8 +11,19 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setSession(pb.authStore.model)
-    setLoading(false)
+    async function initAuth() {
+      if (pb.authStore.isValid) {
+        try {
+          await pb.collection('users').authRefresh()
+        } catch (err) {
+          pb.authStore.clear()
+        }
+      }
+      setSession(pb.authStore.model)
+      setLoading(false)
+    }
+
+    initAuth()
 
     return pb.authStore.onChange((_token, model) => {
       setSession(model)

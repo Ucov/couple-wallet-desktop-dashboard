@@ -20,7 +20,13 @@
 - **Automatización de Bancos (Scraping/Imap):** 
   - `puppeteer` para extraer y verificar recibos del banco directamente navegando por interfaces web cuando es necesario.
   - `imap-simple` y `mailparser` para leer correos de notificaciones del banco y registrar automáticamente gastos recurrentes.
-  - **Macrodroid Webhooks**: Un endpoint de PocketBase (`pb_hooks/macrodroid.pb.js`) diseñado para recibir peticiones HTTP enviadas por Macrodroid desde el móvil del usuario al detectar una notificación bancaria. Extrae automáticamente el importe mediante RegEx, identifica si es gasto o ingreso, implementa control de idempotencia (anti-duplicados por 5 minutos) y lo registra en la base de datos automáticamente.
+  - **Macrodroid Webhooks**: Un endpoint de PocketBase (`pb_hooks/macrodroid.pb.js`) diseñado para recibir peticiones HTTP enviadas por Macrodroid desde el móvil del usuario al detectar una notificación bancaria. Extrae automáticamente el importe mediante RegEx, identifica si es gasto o ingreso e implementa control de idempotencia (anti-duplicados por 5 minutos). **Novedad:** Al guardar el gasto, PocketBase dispara automáticamente un Webhook a **n8n** para continuar el flujo de categorización inteligente.
+
+## ⚙️ Automatizaciones Externas con n8n
+El ecosistema depende fuertemente de **n8n** (típicamente alojado en `n8n.unai-lab.duckdns.org`) para flujos asíncronos y pesados. Hay 3 flujos principales configurados:
+1. **Categorización Mágica:** PocketBase notifica a n8n cuando entra un gasto de Macrodroid. n8n contacta con Gemini, pasándole la lista de IDs de categorías, y devuelve el ID correcto a PocketBase haciendo un PATCH sobre el gasto.
+2. **Subida de Tickets (Nextcloud):** La PWA sube las fotos de los tickets mediante un webhook a n8n, el cual guarda la imagen en la carpeta `CoupleWallet/Tickets` de Nextcloud, genera un enlace público y actualiza el registro en PocketBase.
+3. **Resumen Financiero (Email):** Un cron job en n8n que todos los domingos a las 10AM consulta el gasto de los últimos 7 días en PocketBase, verifica si supera el umbral (ej. 150€) y envía un correo HTML de alerta mediante SMTP.
 
 ### 📂 Estructura de la Base de Código
 ```text

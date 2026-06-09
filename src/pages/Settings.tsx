@@ -9,6 +9,8 @@ export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profiles, setProfiles] = useState<any[]>([])
+  const [joinCode, setJoinCode] = useState('')
+  const [linking, setLinking] = useState(false)
   
   useEffect(() => {
     async function fetchProfiles() {
@@ -16,11 +18,11 @@ export default function Settings() {
         if (user?.couple_id) {
           const coupleProfiles = await pb.collection('users').getFullList({
             filter: `couple_id = "${user.couple_id}"`,
-            sort: 'name'
+            requestKey: null
           })
           setProfiles(coupleProfiles)
         }
-      } catch(err) {
+      } catch(err: any) {
         console.error(err)
       } finally {
         setLoading(false)
@@ -63,6 +65,30 @@ export default function Settings() {
       if (p.id === otherProfile.id) return { ...p, split_percentage: 100 - newValue }
       return p
     }))
+  }
+
+  const handleJoinCouple = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!joinCode) return
+    setLinking(true)
+    try {
+      const res = await fetch('http://localhost:3001/api/join-couple', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ joinCode, userId: user.id })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alert('¡Te has unido al grupo correctamente! Refrescando datos...')
+        window.location.reload()
+      } else {
+        alert('Error: ' + data.error)
+      }
+    } catch (err: any) {
+      alert('Error de conexión: ' + err.message)
+    } finally {
+      setLinking(false)
+    }
   }
 
   if (loading) return <div className="text-zinc-500">Cargando configuración...</div>
@@ -117,8 +143,34 @@ export default function Settings() {
               ))}
             </div>
             {profiles.length < 2 && (
-              <p className="text-amber-500 text-sm mt-4">Atención: No se ha detectado a tu pareja en la base de datos.</p>
+              <p className="text-amber-500 text-sm mt-4">Atención: No se ha detectado a tu pareja en el grupo actual.</p>
             )}
+          </section>
+
+          <section>
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6 space-y-4">
+              <h3 className="font-bold text-white">Cambiar de Grupo / Hogar</h3>
+              <p className="text-sm text-zinc-400">
+                Si quieres unirte a un grupo diferente, introduce el Código de Pareja correspondiente. Tu cuenta pasará a formar parte del nuevo hogar.
+              </p>
+              <div className="flex gap-4">
+                <input 
+                  type="text" 
+                  placeholder="Ej. AB12CD"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors uppercase font-mono tracking-widest"
+                />
+                <button 
+                  type="button"
+                  onClick={handleJoinCouple}
+                  disabled={linking || !joinCode}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
+                >
+                  {linking ? 'Cambiando...' : 'Cambiar de Grupo'}
+                </button>
+              </div>
+            </div>
           </section>
 
           <div className="pt-4 flex justify-end">

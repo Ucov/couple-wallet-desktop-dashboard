@@ -72,6 +72,41 @@ app.post('/api/webhook/wallet', async (req, res) => {
   }
 });
 
+app.post('/api/join-couple', async (req, res) => {
+  const { joinCode, userId } = req.body;
+  if (!joinCode || !userId) {
+    return res.status(400).json({ error: 'El código de pareja y el ID de usuario son requeridos' });
+  }
+
+  try {
+    const PocketBase = (await import('pocketbase')).default;
+    const pb = new PocketBase('http://192.168.1.11:8090');
+    await pb.admins.authWithPassword('unasev48@gmail.com', 'uVVcOMgRKfr1Rbj2');
+
+    // Buscar el grupo por join_code (ignorando mayúsculas/minúsculas o espacios)
+    const normalizedCode = joinCode.trim().toUpperCase();
+    const couples = await pb.collection('couples').getFullList({
+      filter: `join_code = "${normalizedCode}"`
+    });
+
+    if (couples.length === 0) {
+      return res.status(404).json({ error: 'No se encontró ningún grupo con ese código de pareja' });
+    }
+
+    const targetCouple = couples[0];
+
+    // Actualizar al usuario que lo ha solicitado
+    await pb.collection('users').update(userId, {
+      couple_id: targetCouple.id
+    });
+
+    return res.json({ success: true, message: '¡Te has unido al grupo correctamente!' });
+  } catch (error) {
+    console.error('❌ Error vinculando código de pareja:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor de Sincronización corriendo en http://localhost:${PORT}`);

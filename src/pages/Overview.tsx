@@ -33,7 +33,8 @@ export default function Overview() {
       }
 
       const coupleProfiles = await pb.collection('users').getFullList({
-        filter: `couple_id = "${user.couple_id}"`
+        filter: `couple_id = "${user.couple_id}"`,
+        requestKey: null
       })
       const formattedProfiles = coupleProfiles.map(p => ({ id: p.id, name: p.name || 'Sin Nombre', split: p.split_percentage }))
       setProfiles(formattedProfiles)
@@ -43,17 +44,19 @@ export default function Overview() {
 
       const expenses = await pb.collection('expenses').getFullList({
         filter: `couple_id = "${user.couple_id}"`,
-        expand: 'category_id'
+        expand: 'category_id',
+        requestKey: null
       })
       
-      const cats = await pb.collection('categories').getFullList({ sort: 'name' })
+      const cats = await pb.collection('categories').getFullList({ sort: 'name', requestKey: null })
       setCategories(cats)
 
       let buds: RecordModel[] = []
       try {
         buds = await pb.collection('budgets').getFullList({
           filter: `couple_id = "${user.couple_id}"`,
-          expand: 'category_id'
+          expand: 'category_id',
+          requestKey: null
         })
       } catch(err) {
         console.warn("Budgets collection might not be accessible yet", err)

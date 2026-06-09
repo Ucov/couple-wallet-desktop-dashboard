@@ -93,6 +93,27 @@ routerAdd("POST", "/api/webhook/macrodroid", (c) => {
     $app.dao().saveRecord(record);
     console.log(`✅ Nuevo registro: ${type} de ${amount}€ en ${concept}`);
 
+    // Disparar Webhook a n8n para categorización mágica
+    try {
+        const n8nUrl = "https://n8n.unai-lab.duckdns.org/webhook/categorize-expense";
+        const payload = JSON.stringify({
+            "id": record.id,
+            "concept": concept,
+            "amount": amount,
+            "type": type
+        });
+        $http.send({
+            url: n8nUrl,
+            method: "POST",
+            body: payload,
+            headers: { "Content-Type": "application/json" },
+            timeout: 5
+        });
+        console.log(`🚀 Webhook enviado a n8n para categorizar el gasto ${record.id}`);
+    } catch (err) {
+        console.log(`⚠️ Error enviando webhook a n8n: ${err}`);
+    }
+
     return c.json(200, { 
         "success": true, 
         "message": "Guardado correctamente.", 
