@@ -79,18 +79,18 @@ export default function Chores() {
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="¿Qué hay que hacer? (Ej. Limpiar baños, Cita médico...)"
-            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
           />
           <input 
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+            className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
           />
           <button 
             type="submit"
             disabled={!title.trim() || !date}
-            className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center gap-2"
+            className="bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center gap-2"
           >
             <Plus size={20} />
             Agendar

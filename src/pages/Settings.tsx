@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
-import { Save, Users } from 'lucide-react'
+import { Save, Users, Palette } from 'lucide-react'
+
+const THEMES = [
+  { id: 'emerald', name: 'Esmeralda', hex: '#10b981', colors: { 400: '#34d399', 500: '#10b981', 600: '#059669', 900: '#064e3b', 950: '#022c22' } },
+  { id: 'blue', name: 'Zafiro', hex: '#3b82f6', colors: { 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a', 950: '#172554' } },
+  { id: 'purple', name: 'Amatista', hex: '#a855f7', colors: { 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 900: '#581c87', 950: '#3b0764' } },
+  { id: 'rose', name: 'Rubí', hex: '#f43f5e', colors: { 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 900: '#881337', 950: '#4c0519' } },
+  { id: 'amber', name: 'Ámbar', hex: '#f59e0b', colors: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 900: '#78350f', 950: '#451a03' } }
+]
 
 export default function Settings() {
   const { user } = useOutletContext<{ user: RecordModel }>()
@@ -11,6 +19,7 @@ export default function Settings() {
   const [profiles, setProfiles] = useState<any[]>([])
   const [joinCode, setJoinCode] = useState('')
   const [linking, setLinking] = useState(false)
+  const [activeTheme, setActiveTheme] = useState(() => localStorage.getItem('cw_theme_id') || 'emerald')
   
   useEffect(() => {
     async function fetchProfiles() {
@@ -67,6 +76,18 @@ export default function Settings() {
     }))
   }
 
+  const handleThemeChange = (theme: typeof THEMES[0]) => {
+    setActiveTheme(theme.id)
+    localStorage.setItem('cw_theme_id', theme.id)
+    localStorage.setItem('cw_theme', JSON.stringify(theme.colors))
+    
+    // Aplicar inmediatamente al root
+    const root = document.documentElement
+    Object.entries(theme.colors).forEach(([key, val]) => {
+      root.style.setProperty(`--color-primary-${key}`, val)
+    })
+  }
+
   const handleJoinCouple = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!joinCode) return
@@ -104,7 +125,7 @@ export default function Settings() {
         <form onSubmit={handleSave} className="space-y-8">
           
           <section>
-            <div className="flex items-center gap-2 mb-6 text-emerald-400">
+            <div className="flex items-center gap-2 mb-6 text-primary-400">
               <Users size={20} />
               <h2 className="text-xl font-bold text-white">Miembros del Hogar</h2>
             </div>
@@ -122,7 +143,7 @@ export default function Settings() {
                       name={`name_${p.id}`}
                       defaultValue={p.name || ''}
                       required
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
                     />
                   </div>
                   <div>
@@ -136,7 +157,7 @@ export default function Settings() {
                       max="100"
                       value={p.split_percentage}
                       onChange={(e) => handleSplitChange(p.id, Number(e.target.value))}
-                      className="w-full mt-2 accent-emerald-500"
+                      className="w-full mt-2 accent-primary-500"
                     />
                   </div>
                 </div>
@@ -145,6 +166,39 @@ export default function Settings() {
             {profiles.length < 2 && (
               <p className="text-amber-500 text-sm mt-4">Atención: No se ha detectado a tu pareja en el grupo actual.</p>
             )}
+          </section>
+
+          <section>
+            <div className="flex items-center gap-2 mb-6 text-primary-400">
+              <Palette size={20} />
+              <h2 className="text-xl font-bold text-white">Apariencia y Entorno</h2>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+              <p className="text-sm text-zinc-400 mb-6">Selecciona el color de acento principal para todo el Dashboard.</p>
+              
+              <div className="flex flex-wrap gap-4">
+                {THEMES.map(theme => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => handleThemeChange(theme)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
+                      activeTheme === theme.id 
+                        ? 'border-primary-500 bg-primary-950/30 shadow-[0_0_15px_rgba(var(--color-primary-500),0.15)]' 
+                        : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/50'
+                    }`}
+                  >
+                    <div 
+                      className="w-6 h-6 rounded-full shadow-inner" 
+                      style={{ backgroundColor: theme.hex }}
+                    ></div>
+                    <span className={`font-medium ${activeTheme === theme.id ? 'text-white' : 'text-zinc-400'}`}>
+                      {theme.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </section>
 
           <section>
@@ -159,13 +213,13 @@ export default function Settings() {
                   placeholder="Ej. AB12CD"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors uppercase font-mono tracking-widest"
+                  className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors uppercase font-mono tracking-widest"
                 />
                 <button 
                   type="button"
                   onClick={handleJoinCouple}
                   disabled={linking || !joinCode}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
+                  className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-xl font-bold transition-colors disabled:opacity-50"
                 >
                   {linking ? 'Cambiando...' : 'Cambiar de Grupo'}
                 </button>
@@ -177,7 +231,7 @@ export default function Settings() {
             <button 
               type="submit"
               disabled={saving || profiles.length === 0}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="bg-primary-600 hover:bg-primary-500 text-white px-8 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               <Save size={18} />
               {saving ? 'Guardando...' : 'Guardar Cambios de la Casa'}

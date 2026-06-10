@@ -153,7 +153,7 @@ export default function Backup() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-lg">
         <div className="flex items-start gap-4 mb-8">
           <div className="w-12 h-12 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Download className="text-emerald-500" />
+            <Download className="text-primary-500" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Exportar a JSON</h2>
@@ -164,7 +164,7 @@ export default function Backup() {
         </div>
 
         {status === 'success' && (
-          <div className="bg-emerald-950/30 border border-emerald-900/50 rounded-xl p-4 flex items-center gap-3 mb-6 text-emerald-400">
+          <div className="bg-primary-950/30 border border-primary-900/50 rounded-xl p-4 flex items-center gap-3 mb-6 text-primary-400">
             <CheckCircle2 size={20} />
             <p className="font-medium text-sm">Copia de seguridad descargada con éxito.</p>
           </div>
@@ -201,7 +201,7 @@ export default function Backup() {
         </div>
 
         {status === 'import_success' && (
-          <div className="bg-emerald-950/30 border border-emerald-900/50 rounded-xl p-4 flex items-center gap-3 mb-6 text-emerald-400">
+          <div className="bg-primary-950/30 border border-primary-900/50 rounded-xl p-4 flex items-center gap-3 mb-6 text-primary-400">
             <CheckCircle2 size={20} />
             <p className="font-medium text-sm">Copia de seguridad restaurada correctamente. Los datos de tu hogar han sido actualizados.</p>
           </div>

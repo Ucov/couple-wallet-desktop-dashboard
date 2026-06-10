@@ -267,7 +267,7 @@ export default function DataGrid() {
               placeholder="Buscar por concepto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors w-64"
+              className="bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors w-64"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -276,12 +276,12 @@ export default function DataGrid() {
               disabled={isSyncing}
               className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2"
             >
-              <RefreshCw size={18} className={isSyncing ? 'animate-spin text-emerald-400' : ''} />
+              <RefreshCw size={18} className={isSyncing ? 'animate-spin text-primary-400' : ''} />
               {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
             </button>
             <button 
               onClick={() => setIsAdding(true)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2"
+              className="bg-primary-600 hover:bg-primary-500 text-white px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2"
             >
               Añadir Gasto
             </button>
@@ -328,7 +328,7 @@ export default function DataGrid() {
                           </span>
                         )}
                         {exp.status === 'VERIFIED' && (
-                          <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-950/30 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-900/30" title="Verificado por banco y ticket adjunto">
+                          <span className="inline-flex items-center gap-1 text-[10px] bg-primary-950/30 text-primary-400 px-2 py-0.5 rounded-full border border-primary-900/30" title="Verificado por banco y ticket adjunto">
                             <CheckCircle size={10} /> Verificado
                           </span>
                         )}
@@ -348,7 +348,7 @@ export default function DataGrid() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {fileUrl ? (
-                        <a href={fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-1.5 rounded-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors" title="Ver Documento">
+                        <a href={fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center p-1.5 rounded-full bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 transition-colors" title="Ver Documento">
                           <FileText size={16} />
                         </a>
                       ) : (
@@ -359,7 +359,7 @@ export default function DataGrid() {
                       €{Number(exp.amount).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`text-xs px-2 py-1 rounded-md font-bold uppercase tracking-wider ${isMe ? 'bg-emerald-500/10 text-emerald-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                      <span className={`text-xs px-2 py-1 rounded-md font-bold uppercase tracking-wider ${isMe ? 'bg-primary-500/10 text-primary-400' : 'bg-purple-500/10 text-purple-400'}`}>
                         {exp.expand?.paid_by?.name || (isMe ? 'Tú' : 'Pareja')}
                       </span>
                     </td>
@@ -406,7 +406,7 @@ export default function DataGrid() {
                   defaultValue={editingExp?.concept || ''}
                   onChange={(e) => handleConceptChange(e.target.value)}
                   required
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
                 />
               </div>
               
@@ -416,7 +416,7 @@ export default function DataGrid() {
                   <button 
                     type="button"
                     onClick={() => setIsAdvancedSplit(!isAdvancedSplit)}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${isAdvancedSplit ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${isAdvancedSplit ? 'bg-primary-500' : 'bg-zinc-800'}`}
                   >
                     <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isAdvancedSplit ? 'left-7' : 'left-1'}`} />
                   </button>
@@ -432,7 +432,7 @@ export default function DataGrid() {
                     step="0.01"
                     defaultValue={editingExp?.amount || ''}
                     required={!isAdvancedSplit}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
                   />
                 </div>
               ) : (
@@ -441,7 +441,7 @@ export default function DataGrid() {
                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total del Ticket (€)</label>
                     <input 
                       type="number" step="0.01" value={totalAmount} onChange={e => setTotalAmount(e.target.value ? Number(e.target.value) : '')} required
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-white focus:border-emerald-500 transition-colors"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-white focus:border-primary-500 transition-colors"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -462,7 +462,7 @@ export default function DataGrid() {
                   </div>
                   <div className="pt-3 border-t border-zinc-800 flex justify-between items-center">
                     <span className="text-xs text-zinc-500">Gasto Común Resultante:</span>
-                    <span className={`font-mono font-bold ${((Number(totalAmount)||0) - (Number(myPersonal)||0) - (Number(partnerPersonal)||0)) < 0 ? 'text-red-500' : 'text-emerald-400'}`}>
+                    <span className={`font-mono font-bold ${((Number(totalAmount)||0) - (Number(myPersonal)||0) - (Number(partnerPersonal)||0)) < 0 ? 'text-red-500' : 'text-primary-400'}`}>
                       {((Number(totalAmount)||0) - (Number(myPersonal)||0) - (Number(partnerPersonal)||0)).toFixed(2)}€
                     </span>
                   </div>
@@ -476,7 +476,7 @@ export default function DataGrid() {
                   ref={categorySelectRef}
                   defaultValue={editingExp?.expand?.category_id?.id || ''}
                   required
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
                 >
                   {categories.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -489,7 +489,7 @@ export default function DataGrid() {
                   <Paperclip size={16} /> Adjuntar y Leer Ticket
                 </label>
                 {getFileUrl(editingExp) && (
-                  <div className="mb-2 text-xs text-emerald-400">
+                  <div className="mb-2 text-xs text-primary-400">
                     Este gasto ya tiene un documento adjunto. Subir uno nuevo lo reemplazará.
                   </div>
                 )}
@@ -498,23 +498,23 @@ export default function DataGrid() {
                   ref={fileInputRef}
                   accept="image/*,.pdf"
                   onChange={handleFileUpload}
-                  className="w-full text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-emerald-400 hover:file:bg-zinc-700 transition-colors cursor-pointer"
+                  className="w-full text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-primary-400 hover:file:bg-zinc-700 transition-colors cursor-pointer"
                 />
                 {isScanning && (
-                  <div className="flex items-center gap-2 mt-3 text-xs text-emerald-400 font-bold animate-pulse">
+                  <div className="flex items-center gap-2 mt-3 text-xs text-primary-400 font-bold animate-pulse">
                     <Loader2 size={14} className="animate-spin" /> IA escaneando productos...
                   </div>
                 )}
                 {scannedItems.length > 0 && (
                   <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-2 mt-3">
-                    <h3 className="text-xs font-bold text-emerald-400 flex items-center gap-1"><Sparkles size={14}/> Checklist Inteligente</h3>
+                    <h3 className="text-xs font-bold text-primary-400 flex items-center gap-1"><Sparkles size={14}/> Checklist Inteligente</h3>
                     <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
                       {scannedItems.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center text-xs p-2 bg-zinc-900 rounded-lg">
                            <span className="text-zinc-300 w-[45%] truncate" title={item.name}>{item.name}</span>
                            <span className="text-zinc-400 font-mono w-[15%] text-right">{item.price.toFixed(2)}€</span>
                            <select 
-                             className="bg-zinc-800 text-white rounded p-1 border border-zinc-700 focus:border-emerald-500"
+                             className="bg-zinc-800 text-white rounded p-1 border border-zinc-700 focus:border-primary-500"
                              value={item.assignment}
                              onChange={(e) => {
                                const newItems = [...scannedItems];
@@ -544,7 +544,7 @@ export default function DataGrid() {
                 </button>
                 <button 
                   type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-xl font-medium transition-colors"
+                  className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-2 rounded-xl font-medium transition-colors"
                 >
                   Guardar Cambios
                 </button>

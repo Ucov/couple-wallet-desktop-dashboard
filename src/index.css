@@ -1,7 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary-400: var(--color-primary-400);
+  --color-primary-500: var(--color-primary-500);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-900: var(--color-primary-900);
+  --color-primary-950: var(--color-primary-950);
+}
+
 :root {
   color-scheme: dark;
+  /* Default Emerald Palette */
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-900: #064e3b;
+  --color-primary-950: #022c22;
 }
 
 body {

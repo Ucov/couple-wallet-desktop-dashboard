@@ -88,12 +88,12 @@ export default function Shopping() {
             value={newItemName}
             onChange={e => setNewItemName(e.target.value)}
             placeholder="¿Qué hace falta comprar? (Ej. Leche, Papel higiénico...)"
-            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
           />
           <button 
             type="submit"
             disabled={!newItemName.trim()}
-            className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center gap-2"
+            className="bg-primary-600 hover:bg-primary-500 disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold transition-colors flex items-center gap-2"
           >
             <Plus size={20} />
             Añadir
@@ -111,7 +111,7 @@ export default function Shopping() {
                 <div key={item.id} className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl group hover:border-zinc-700 transition-colors">
                   <span className="text-white font-medium">{item.name}</span>
                   <div className="flex gap-2">
-                    <button onClick={() => handleToggle(item)} className="p-2 bg-zinc-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-zinc-400 rounded-lg transition-colors">
+                    <button onClick={() => handleToggle(item)} className="p-2 bg-zinc-800 hover:bg-primary-500/20 hover:text-primary-400 text-zinc-400 rounded-lg transition-colors">
                       <Check size={18} />
                     </button>
                     <button onClick={() => handleDelete(item.id)} className="p-2 opacity-0 group-hover:opacity-100 bg-red-950/30 hover:bg-red-900 text-red-400 rounded-lg transition-all">
@@ -133,7 +133,7 @@ export default function Shopping() {
                   <div key={item.id} className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl group">
                     <span className="text-zinc-400 line-through">{item.name}</span>
                     <div className="flex gap-2">
-                      <button onClick={() => handleToggle(item)} className="p-2 bg-emerald-900/30 text-emerald-500 rounded-lg transition-colors">
+                      <button onClick={() => handleToggle(item)} className="p-2 bg-primary-900/30 text-primary-500 rounded-lg transition-colors">
                         <Check size={18} />
                       </button>
                       <button onClick={() => handleDelete(item.id)} className="p-2 bg-red-950/30 hover:bg-red-900 text-red-400 rounded-lg transition-all">

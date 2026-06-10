@@ -11,6 +11,18 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Aplicar tema guardado
+    const savedTheme = localStorage.getItem('cw_theme')
+    if (savedTheme) {
+      try {
+        const themeColors = JSON.parse(savedTheme)
+        const root = document.documentElement
+        Object.entries(themeColors).forEach(([key, val]) => {
+          root.style.setProperty(`--color-primary-${key}`, val as string)
+        })
+      } catch (e) {}
+    }
+
     async function initAuth() {
       if (pb.authStore.isValid) {
         try {

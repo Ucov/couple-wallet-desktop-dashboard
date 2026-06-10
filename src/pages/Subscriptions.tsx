@@ -8,6 +8,7 @@ export default function Subscriptions() {
   const { user } = useOutletContext<{ user: RecordModel }>()
   const [subscriptions, setSubscriptions] = useState<RecordModel[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [categories, setCategories] = useState<RecordModel[]>([])
 
   const [form, setForm] = useState({
@@ -28,16 +29,21 @@ export default function Subscriptions() {
       if (user?.couple_id) {
         const subs = await pb.collection('subscriptions').getFullList({
           filter: `couple_id = "${user.couple_id}"`,
-          sort: '-created',
-          expand: 'category_id'
+          expand: 'category_id',
+          requestKey: null
         })
         setSubscriptions(subs)
         
-        const cats = await pb.collection('categories').getFullList()
+        const cats = await pb.collection('categories').getFullList({
+          sort: 'name',
+          requestKey: null
+        })
         setCategories(cats)
       }
-    } catch (err) {
-      console.error(err)
+    } catch (err: any) {
+      const details = err.response ? JSON.stringify(err.response, null, 2) : err.message
+      console.error("Error fetching subscriptions:", details)
+      setErrorMsg(details)
     } finally {
       setLoading(false)
     }
@@ -93,10 +99,16 @@ export default function Subscriptions() {
   }
 
   if (loading) return <div className="text-zinc-500">Cargando suscripciones...</div>
+  if (errorMsg) return (
+    <div className="p-6 bg-red-950/30 border border-red-500/50 rounded-2xl text-red-400">
+      <h3 className="font-bold mb-2">Error de Base de Datos:</h3>
+      <pre className="text-xs overflow-auto whitespace-pre-wrap">{errorMsg}</pre>
+    </div>
+  )
 
   const totalMonthly = subscriptions
     .filter(s => s.status === 'active')
-    .reduce((acc, curr) => acc + curr.amount * (curr.billing_cycle === 'yearly' ? 1/12 : 1), 0)
+    .reduce((acc, curr) => acc + (Number(curr.amount) || 0) * (curr.billing_cycle === 'yearly' ? 1/12 : 1), 0)
 
   return (
     <div className="space-y-6">
@@ -107,13 +119,13 @@ export default function Subscriptions() {
         </div>
         <div className="text-right">
           <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Costo Mensual Activo</p>
-          <p className="text-4xl font-black text-emerald-400">{totalMonthly.toFixed(2)} €</p>
+          <p className="text-4xl font-black text-primary-400">{totalMonthly.toFixed(2)} €</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg h-fit">
-          <div className="flex items-center gap-2 text-emerald-400 mb-4">
+          <div className="flex items-center gap-2 text-primary-400 mb-4">
             <Zap size={20} />
             <h2 className="text-xl font-bold text-white">Nueva Suscripción</h2>
           </div>
@@ -126,7 +138,7 @@ export default function Subscriptions() {
                 value={form.name}
                 onChange={e => setForm({...form, name: e.target.value})}
                 placeholder="Ej. Netflix"
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -138,7 +150,7 @@ export default function Subscriptions() {
                   value={form.amount}
                   onChange={e => setForm({...form, amount: e.target.value})}
                   placeholder="0.00"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
                 />
               </div>
               <div>
@@ -146,7 +158,7 @@ export default function Subscriptions() {
                 <select 
                   value={form.billing_cycle}
                   onChange={e => setForm({...form, billing_cycle: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
                 >
                   <option value="monthly">Mensual</option>
                   <option value="yearly">Anual</option>
@@ -158,7 +170,7 @@ export default function Subscriptions() {
               <select 
                 value={form.category_id}
                 onChange={e => setForm({...form, category_id: e.target.value})}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
               >
                 <option value="">Selecciona...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -167,7 +179,7 @@ export default function Subscriptions() {
             <button 
               type="submit"
               disabled={!form.name || !form.amount || !form.category_id}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 mt-4"
+              className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-500 text-white px-4 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 mt-4"
             >
               <Plus size={18} /> Añadir
             </button>
@@ -192,9 +204,13 @@ export default function Subscriptions() {
                   : 'bg-zinc-950/50 border-zinc-900 opacity-75'
               }`}>
                 <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-2xl ${sub.status === 'active' ? 'bg-emerald-950/50 text-emerald-400' : 'bg-zinc-900 text-zinc-600'}`}>
-                    {sub.status === 'active' ? <Play size={24} /> : <Pause size={24} />}
-                  </div>
+                  <button 
+                    onClick={() => toggleStatus(sub)}
+                    className={`p-4 rounded-2xl cursor-pointer hover:scale-105 transition-all active:scale-95 ${sub.status === 'active' ? 'bg-primary-950/50 text-primary-400 hover:bg-primary-900/50' : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-400'}`}
+                    title={sub.status === 'active' ? 'Pausar suscripción' : 'Activar suscripción'}
+                  >
+                    {sub.status === 'active' ? <Pause size={24} /> : <Play size={24} />}
+                  </button>
                   <div>
                     <h3 className={`font-bold text-xl ${sub.status === 'active' ? 'text-white' : 'text-zinc-600 line-through'}`}>{sub.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
@@ -215,13 +231,7 @@ export default function Subscriptions() {
                     </p>
                   </div>
                   
-                  <div className="flex flex-col gap-2 border-l border-zinc-800 pl-6">
-                    <button 
-                      onClick={() => toggleStatus(sub)}
-                      className="text-xs font-bold text-zinc-400 hover:text-white transition-colors"
-                    >
-                      {sub.status === 'active' ? 'Pausar' : 'Activar'}
-                    </button>
+                  <div className="flex flex-col justify-center border-l border-zinc-800 pl-6">
                     <button 
                       onClick={() => handleDelete(sub.id)}
                       className="text-xs font-bold text-red-500/70 hover:text-red-400 transition-colors"
