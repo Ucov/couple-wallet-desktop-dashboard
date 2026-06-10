@@ -11,16 +11,18 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Aplicar tema guardado
-    const savedTheme = localStorage.getItem('cw_theme')
-    if (savedTheme) {
-      try {
+    // Aplicar tema guardado con seguridad para iframes (Cross-Origin localStorage access can throw)
+    try {
+      const savedTheme = localStorage.getItem('cw_theme')
+      if (savedTheme) {
         const themeColors = JSON.parse(savedTheme)
         const root = document.documentElement
         Object.entries(themeColors).forEach(([key, val]) => {
           root.style.setProperty(`--color-primary-${key}`, val as string)
         })
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.warn('No se pudo acceder a localStorage para el tema:', e)
     }
 
     async function initAuth() {
