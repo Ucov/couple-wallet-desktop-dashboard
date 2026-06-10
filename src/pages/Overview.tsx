@@ -228,13 +228,12 @@ export default function Overview() {
 
   if (loading) return <div className="text-zinc-500">Cargando resumen...</div>
 
-  const userA = profiles[0] || { id: user.id, name: 'Tú', split: stats.mySplit }
-  const userB = profiles[1] || { id: 'unknown', name: 'Pareja', split: stats.partnerSplit }
-
-  const userABalance = stats.balance
+  const userA = profiles[0] || { id: user.id, name: 'Tú', split: stats.mySplit || 50 }
+  const userB = profiles[1] || { id: 'unknown', name: 'Pareja', split: stats.partnerSplit || 50 }
+  const userABalance = stats.balance || 0
 
   if ((stats as any).error) {
-return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats as any).error}</div>
+    return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats as any).error}</div>
   }
 
   return (
@@ -311,8 +310,8 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                 {budgets.map(b => {
                   const cat = b.expand?.category_id
                   const spent = currentMonthTotals[b.category_id] || 0
-                  const limit = b.amount
-                  const percent = Math.min((spent / limit) * 100, 100)
+                  const limit = Number(b.amount) || 0
+                  const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 100
                   const colorClass = percent < 75 ? 'bg-primary-500' : percent < 95 ? 'bg-amber-500' : 'bg-red-500'
                   
                   const now = new Date()
@@ -343,7 +342,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                         <div className="flex items-center gap-2">
                           <div className="opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center gap-0.5 bg-zinc-900/80 rounded-lg p-1 border border-white/5">
                              <button 
-                               onClick={() => { setBudgetForm({ category_id: b.category_id, amount: b.amount.toString() }); setBudgetModalOpen(true); }}
+                               onClick={() => { setBudgetForm({ category_id: b.category_id, amount: (b.amount || 0).toString() }); setBudgetModalOpen(true); }}
                                className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors"
                                title="Editar Presupuesto"
                              >
