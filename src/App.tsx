@@ -30,7 +30,8 @@ function App() {
         try {
           await pb.collection('users').authRefresh()
         } catch (err) {
-          pb.authStore.clear()
+          console.warn('Auth refresh failed, keeping current session:', err)
+          // Do NOT clear the authStore here, as it might fail due to iframe/CORS issues
         }
       }
       setSession(pb.authStore.model)
