@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
-import { Download, ShieldAlert, CheckCircle2, Upload } from 'lucide-react'
+import { Download, ShieldAlert, CheckCircle2, Upload, AlertTriangle } from 'lucide-react'
 
 export default function Backup() {
   const { user } = useOutletContext<{ user: RecordModel }>()

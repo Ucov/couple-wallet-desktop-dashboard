@@ -19,11 +19,7 @@ export default function Settings() {
   const [profiles, setProfiles] = useState<any[]>([])
   const [joinCode, setJoinCode] = useState('')
   const [linking, setLinking] = useState(false)
-  const [activeTheme, setActiveTheme] = useState(() => {
-    try {
-      return localStorage.getItem('cw_theme_id') || 'emerald'
-    } catch(e) { return 'emerald' }
-  })
+  const [activeTheme, setActiveTheme] = useState(() => localStorage.getItem('cw_theme_id') || 'emerald')
   
   useEffect(() => {
     async function fetchProfiles() {
@@ -82,10 +78,8 @@ export default function Settings() {
 
   const handleThemeChange = (theme: typeof THEMES[0]) => {
     setActiveTheme(theme.id)
-    try {
-      localStorage.setItem('cw_theme_id', theme.id)
-      localStorage.setItem('cw_theme', JSON.stringify(theme.colors))
-    } catch(e) {}
+    localStorage.setItem('cw_theme_id', theme.id)
+    localStorage.setItem('cw_theme', JSON.stringify(theme.colors))
     
     // Aplicar inmediatamente al root
     const root = document.documentElement

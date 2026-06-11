@@ -11,18 +11,16 @@ function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Aplicar tema guardado con seguridad para iframes (Cross-Origin localStorage access can throw)
-    try {
-      const savedTheme = localStorage.getItem('cw_theme')
-      if (savedTheme) {
+    // Aplicar tema guardado
+    const savedTheme = localStorage.getItem('cw_theme')
+    if (savedTheme) {
+      try {
         const themeColors = JSON.parse(savedTheme)
         const root = document.documentElement
         Object.entries(themeColors).forEach(([key, val]) => {
           root.style.setProperty(`--color-primary-${key}`, val as string)
         })
-      }
-    } catch (e) {
-      console.warn('No se pudo acceder a localStorage para el tema:', e)
+      } catch (e) {}
     }
 
     async function initAuth() {
@@ -30,8 +28,7 @@ function App() {
         try {
           await pb.collection('users').authRefresh()
         } catch (err) {
-          console.warn('Auth refresh failed, keeping current session:', err)
-          // Do NOT clear the authStore here, as it might fail due to iframe/CORS issues
+          pb.authStore.clear()
         }
       }
       setSession(pb.authStore.model)
