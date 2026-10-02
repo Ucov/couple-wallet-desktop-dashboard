@@ -14,9 +14,9 @@ export default function Sidebar() {
   const links = [
     { to: '/', icon: LayoutDashboard, label: 'Resumen Financiero' },
     { to: '/expenses', icon: Wallet, label: 'Base de Gastos' },
-    { to: '/subscriptions', icon: Repeat, label: 'Suscripciones' },
+    { to: '/subscriptions', icon: Repeat, label: 'Gastos Fijos' },
     { to: '/shopping', icon: ShoppingCart, label: 'Lista de la Compra' },
-    { to: '/chores', icon: CalendarDays, label: 'Calendario y Tareas' },
+    { to: '/chores', icon: CalendarDays, label: 'Tareas Domésticas' },
     { to: '/backup', icon: Database, label: 'Respaldos y Exportación' },
     { to: '/settings', icon: Settings, label: 'Configuración Pareja' },
   ]

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
-import { Repeat, Plus, Zap, Play, Pause } from 'lucide-react'
+import { Repeat, Plus, Zap, Pause, Play, Trash2 } from 'lucide-react'
 
 export default function Subscriptions() {
   const { user } = useOutletContext<{ user: RecordModel }>()
@@ -12,11 +12,10 @@ export default function Subscriptions() {
   const [categories, setCategories] = useState<RecordModel[]>([])
 
   const [form, setForm] = useState({
-    name: '',
+    concept: '',
     amount: '',
-    status: 'active',
-    billing_cycle: 'monthly',
-    category_id: ''
+    category_id: '',
+    day_of_month: 1
   })
 
   useEffect(() => {
@@ -27,8 +26,8 @@ export default function Subscriptions() {
     setLoading(true)
     try {
       if (user?.couple_id) {
-        const subs = await pb.collection('subscriptions').getFullList({
-          filter: `couple_id = "${user.couple_id}"`,
+        const subs = await pb.collection('recurring_expenses').getFullList({
+          filter: couple_id = "",
           expand: 'category_id',
           requestKey: null
         })
@@ -51,54 +50,50 @@ export default function Subscriptions() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name || !form.amount || !form.category_id || !user?.couple_id) return
+    if (!form.concept || !form.amount || !form.category_id || !user?.couple_id) return
 
     try {
-      const data = await pb.collection('subscriptions').create({
-        ...form,
-        amount: Number(form.amount),
+      const data = await pb.collection('recurring_expenses').create({
         couple_id: user.couple_id,
-        paid_by: user.id
+        concept: form.concept,
+        amount: parseFloat(form.amount),
+        category_id: form.category_id,
+        day_of_month: Number(form.day_of_month),
+        paid_by: user.id,
+        is_paused: false
       })
       
-      const expandedData = await pb.collection('subscriptions').getOne(data.id, { expand: 'category_id' })
-      setSubscriptions([expandedData, ...subscriptions])
-      
-      setForm({
-        name: '',
-        amount: '',
-        status: 'active',
-        billing_cycle: 'monthly',
-        category_id: form.category_id
-      })
-    } catch (err: any) {
-      alert('Error: ' + err.message)
-    }
-  }
-
-  const toggleStatus = async (sub: RecordModel) => {
-    try {
-      const newStatus = sub.status === 'active' ? 'paused' : 'active'
-      await pb.collection('subscriptions').update(sub.id, {
-        status: newStatus
-      })
-      setSubscriptions(subscriptions.map(s => s.id === sub.id ? { ...s, status: newStatus } : s))
+      const expandedData = await pb.collection('recurring_expenses').getOne(data.id, { expand: 'category_id' })
+      setSubscriptions([...subscriptions, expandedData])
+      setForm({ concept: '', amount: '', category_id: '', day_of_month: 1 })
     } catch(err) {
       console.error(err)
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Eliminar suscripción?')) return
+  const toggleStatus = async (sub: RecordModel) => {
     try {
-      await pb.collection('subscriptions').delete(id)
+      const newStatus = !sub.is_paused
+      await pb.collection('recurring_expenses').update(sub.id, {
+        is_paused: newStatus
+      })
+      setSubscriptions(subscriptions.map(s => s.id === sub.id ? { ...s, is_paused: newStatus } : s))
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('¿Eliminar gasto recurrente?')) return
+    try {
+      await pb.collection('recurring_expenses').delete(id)
       setSubscriptions(subscriptions.filter(s => s.id !== id))
     } catch(err) {
       console.error(err)
     }
   }
 
-  if (loading) return <div className="text-zinc-500">Cargando suscripciones...</div>
+  if (loading) return <div className="text-zinc-500">Cargando gastos recurrentes...</div>
   if (errorMsg) return (
     <div className="p-6 bg-red-950/30 border border-red-500/50 rounded-2xl text-red-400">
       <h3 className="font-bold mb-2">Error de Base de Datos:</h3>
@@ -107,14 +102,14 @@ export default function Subscriptions() {
   )
 
   const totalMonthly = subscriptions
-    .filter(s => s.status === 'active')
-    .reduce((acc, curr) => acc + (Number(curr.amount) || 0) * (curr.billing_cycle === 'yearly' ? 1/12 : 1), 0)
+    .filter(s => !s.is_paused)
+    .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0)
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Radar de Suscripciones</h1>
+          <h1 className="text-3xl font-black text-white tracking-tight">Gastos Fijos</h1>
           <p className="text-zinc-500 mt-1">Detecta y controla los pagos recurrentes del hogar.</p>
         </div>
         <div className="text-right">
@@ -127,17 +122,17 @@ export default function Subscriptions() {
         <div className="col-span-1 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg h-fit">
           <div className="flex items-center gap-2 text-primary-400 mb-4">
             <Zap size={20} />
-            <h2 className="text-xl font-bold text-white">Nueva Suscripción</h2>
+            <h2 className="text-xl font-bold text-white">Nuevo Gasto Fijo</h2>
           </div>
           
           <form onSubmit={handleAdd} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Servicio</label>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Servicio / Gasto</label>
               <input 
                 type="text" 
-                value={form.name}
-                onChange={e => setForm({...form, name: e.target.value})}
-                placeholder="Ej. Netflix"
+                value={form.concept}
+                onChange={e => setForm({...form, concept: e.target.value})}
+                placeholder="Ej. Netflix o Alquiler"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
               />
             </div>
@@ -154,15 +149,14 @@ export default function Subscriptions() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Ciclo</label>
-                <select 
-                  value={form.billing_cycle}
-                  onChange={e => setForm({...form, billing_cycle: e.target.value})}
+                <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Día del Mes</label>
+                <input 
+                  type="number" 
+                  min="1" max="31"
+                  value={form.day_of_month}
+                  onChange={e => setForm({...form, day_of_month: Number(e.target.value)})}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
-                >
-                  <option value="monthly">Mensual</option>
-                  <option value="yearly">Anual</option>
-                </select>
+                />
               </div>
             </div>
             <div>
@@ -178,7 +172,7 @@ export default function Subscriptions() {
             </div>
             <button 
               type="submit"
-              disabled={!form.name || !form.amount || !form.category_id}
+              disabled={!form.concept || !form.amount || !form.category_id}
               className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-500 text-white px-4 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 mt-4"
             >
               <Plus size={18} /> Añadir
@@ -188,37 +182,33 @@ export default function Subscriptions() {
 
         <div className="col-span-2 space-y-4">
           <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-            <Repeat size={16} /> Suscripciones Activas y Pausadas
+            <Repeat size={16} /> Listado de Gastos
           </h2>
           
           <div className="grid gap-4">
             {subscriptions.length === 0 && (
               <div className="p-8 text-center border border-dashed border-zinc-800 rounded-2xl text-zinc-500">
-                No hay suscripciones registradas.
+                No hay gastos recurrentes registrados.
               </div>
             )}
             {subscriptions.map(sub => (
-              <div key={sub.id} className={`flex items-center justify-between p-6 rounded-2xl border transition-all ${
-                sub.status === 'active' 
-                  ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' 
-                  : 'bg-zinc-950/50 border-zinc-900 opacity-75'
-              }`}>
+              <div key={sub.id} className={lex items-center justify-between p-6 rounded-2xl border transition-all }>
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => toggleStatus(sub)}
-                    className={`p-4 rounded-2xl cursor-pointer hover:scale-105 transition-all active:scale-95 ${sub.status === 'active' ? 'bg-primary-950/50 text-primary-400 hover:bg-primary-900/50' : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-400'}`}
-                    title={sub.status === 'active' ? 'Pausar suscripción' : 'Activar suscripción'}
+                    className={p-4 rounded-2xl cursor-pointer hover:scale-105 transition-all active:scale-95 }
+                    title={!sub.is_paused ? 'Pausar gasto' : 'Reanudar gasto'}
                   >
-                    {sub.status === 'active' ? <Pause size={24} /> : <Play size={24} />}
+                    {!sub.is_paused ? <Pause size={24} /> : <Play size={24} />}
                   </button>
                   <div>
-                    <h3 className={`font-bold text-xl ${sub.status === 'active' ? 'text-white' : 'text-zinc-600 line-through'}`}>{sub.name}</h3>
+                    <h3 className={ont-bold text-xl }>{sub.concept}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded-md">
-                        {sub.expand?.category_id?.name}
+                        {sub.expand?.category_id?.name || 'Sin categoría'}
                       </span>
-                      <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">
-                        {sub.billing_cycle === 'monthly' ? 'Mensual' : 'Anual'}
+                      <span className="text-xs text-zinc-500 font-semibold">
+                        Día {sub.day_of_month}
                       </span>
                     </div>
                   </div>
@@ -226,17 +216,16 @@ export default function Subscriptions() {
                 
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className={`text-2xl font-black ${sub.status === 'active' ? 'text-white' : 'text-zinc-600'}`}>
-                      {sub.amount.toFixed(2)} €
+                    <p className={	ext-2xl font-black }>
+                      {Number(sub.amount).toFixed(2)} €
                     </p>
                   </div>
-                  
                   <div className="flex flex-col justify-center border-l border-zinc-800 pl-6">
                     <button 
                       onClick={() => handleDelete(sub.id)}
                       className="text-xs font-bold text-red-500/70 hover:text-red-400 transition-colors"
                     >
-                      Eliminar
+                      <Trash2 size={20} />
                     </button>
                   </div>
                 </div>

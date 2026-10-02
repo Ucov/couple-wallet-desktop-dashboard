@@ -20,7 +20,7 @@ export default function Shopping() {
       if (user?.couple_id) {
         const data = await pb.collection('shopping_items').getFullList({
           filter: `couple_id = "${user.couple_id}"`,
-          sort: '-created_at'
+          sort: '-created'
         })
         setItems(data)
       }

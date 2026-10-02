@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
@@ -141,7 +141,8 @@ export default function Overview() {
       setChartData(Object.values(months).reverse())
 
       const donutCats: Record<string, number> = {}
-      expenses.filter(e => !e.is_transfer && !e.is_refundable).forEach(e => {
+      const currentMonthStr = new Date().toISOString().substring(0, 7)
+      expenses.filter(e => !e.is_transfer && !e.is_refundable && e.date && e.date.substring(0,7) === currentMonthStr).forEach(e => {
         const catName = e.expand?.category_id?.name || 'Otros'
         donutCats[catName] = (donutCats[catName] || 0) + Number(e.amount)
       })
@@ -174,7 +175,7 @@ export default function Overview() {
       const amountToSettle = Math.abs(stats.balance)
 
       await pb.collection('expenses').create({
-        concept: 'Liquidación de saldo',
+        concept: 'LiquidaciÃ³n de saldo',
         amount: amountToSettle,
         is_transfer: true,
         date: new Date().toISOString(),
@@ -217,7 +218,7 @@ export default function Overview() {
   }
 
   const handleDeleteBudget = async (id: string) => {
-    if (!window.confirm('¿Seguro que quieres eliminar este control de presupuesto?')) return
+    if (!window.confirm('Â¿Seguro que quieres eliminar este control de presupuesto?')) return
     try {
       await pb.collection('budgets').delete(id)
       setBudgets(budgets.filter(b => b.id !== id))
@@ -228,7 +229,7 @@ export default function Overview() {
 
   if (loading) return <div className="text-zinc-500">Cargando resumen...</div>
 
-  const userA = profiles[0] || { id: user.id, name: 'Tú', split: stats.mySplit }
+  const userA = profiles[0] || { id: user.id, name: 'TÃº', split: stats.mySplit }
   const userB = profiles[1] || { id: 'unknown', name: 'Pareja', split: stats.partnerSplit }
 
   const userABalance = stats.balance
@@ -252,7 +253,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                 <div>
                   <p className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Balance de {userA.name}</p>
                   <p className={`text-3xl font-black tracking-tight ${userABalance >= 0 ? 'text-primary-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'text-red-400 drop-shadow-[0_0_10px_rgba(248,113,113,0.3)]'}`}>
-                    {userABalance >= 0 ? '+' : ''}{userABalance.toFixed(2)} €
+                    {userABalance >= 0 ? '+' : ''}{userABalance.toFixed(2)} â‚¬
                   </p>
                   <p className="text-xs text-zinc-500 mt-1">
                     {userABalance > 0 ? `${userB.name} le debe a ${userA.name}` : userABalance < 0 ? `${userA.name} le debe a ${userB.name}` : 'Cuentas saldadas'}
@@ -305,7 +306,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
           
           <div className="relative z-10 flex-1 overflow-y-auto pr-2 custom-scrollbar">
             {budgets.length === 0 ? (
-              <p className="text-xs text-zinc-500 text-center mt-4">No hay límites establecidos.</p>
+              <p className="text-xs text-zinc-500 text-center mt-4">No hay lÃ­mites establecidos.</p>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {budgets.map(b => {
@@ -324,11 +325,11 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                   let forecastClass = ''
                   if (currentDay > 5 || spent >= limit) {
                     if (projected > limit && spent > 0) {
-                      forecastMsg = `Peligro: Proyección total de ${projected.toFixed(0)}€ a final de mes`
+                      forecastMsg = `Peligro: ProyecciÃ³n total de ${projected.toFixed(0)}â‚¬ a final de mes`
                       forecastClass = 'text-amber-500 text-[10px] mt-1 font-bold flex items-center gap-1'
                     } else if (spent > 0) {
                       const saved = limit - projected
-                      forecastMsg = `Vas genial: Proyección de ahorro de ${saved.toFixed(0)}€ a final de mes`
+                      forecastMsg = `Vas genial: ProyecciÃ³n de ahorro de ${saved.toFixed(0)}â‚¬ a final de mes`
                       forecastClass = 'text-primary-500 text-[10px] mt-1 flex items-center gap-1'
                     }
                   }
@@ -358,8 +359,8 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                              </button>
                           </div>
                           <div className="text-right ml-1">
-                             <span className={`font-mono text-sm ${spent > limit ? 'text-red-400 font-black' : 'text-zinc-300 font-bold'}`}>{spent.toFixed(0)}€</span>
-                             <span className="text-zinc-500 font-mono text-xs ml-1">/ {limit.toFixed(0)}€</span>
+                             <span className={`font-mono text-sm ${spent > limit ? 'text-red-400 font-black' : 'text-zinc-300 font-bold'}`}>{spent.toFixed(0)}â‚¬</span>
+                             <span className="text-zinc-500 font-mono text-xs ml-1">/ {limit.toFixed(0)}â‚¬</span>
                           </div>
                         </div>
                       </div>
@@ -369,7 +370,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                       </div>
                       {forecastMsg && (
                         <p className={`${forecastClass} relative z-10`}>
-                           {projected > limit ? '⚠️' : '🎯'} {forecastMsg}
+                           {projected > limit ? 'âš ï¸' : 'ðŸŽ¯'} {forecastMsg}
                         </p>
                       )}
                     </div>
@@ -384,14 +385,14 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col h-[400px] hover:border-white/10 hover:bg-zinc-900/60 transition-all duration-300 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-75 opacity-50"></div>
-          <h3 className="text-white font-bold mb-4 relative z-10 tracking-wide">Evolución de Gastos ({userA.name} vs {userB.name})</h3>
+          <h3 className="text-white font-bold mb-4 relative z-10 tracking-wide">EvoluciÃ³n de Gastos ({userA.name} vs {userB.name})</h3>
           <div className="flex-1 w-full h-full min-h-0 relative z-10">
             {chartData.length > 0 ? <ExpenseAreaChart data={chartData} userA={userA.name} userB={userB.name} /> : <p className="text-zinc-500 text-sm">No hay suficientes datos</p>}
           </div>
         </div>
         <div className="col-span-1 bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col h-[400px] hover:border-white/10 hover:bg-zinc-900/60 transition-all duration-300 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-75 opacity-50"></div>
-          <h3 className="text-white font-bold mb-4 relative z-10 tracking-wide">Gastos por Categoría</h3>
+          <h3 className="text-white font-bold mb-4 relative z-10 tracking-wide">Gastos por CategorÃ­a</h3>
           <div className="flex-1 w-full h-full min-h-0 relative z-10">
             {donutData.length > 0 ? <CategoryDonutChart data={donutData} /> : <p className="text-zinc-500 text-sm">No hay suficientes datos</p>}
           </div>
@@ -408,8 +409,8 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
             <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 mb-6">
               <p className="text-zinc-300 leading-relaxed">
                 {userABalance > 0 
-                  ? `¿Confirmas que ${userB.name} te ha pagado ${Math.abs(userABalance).toFixed(2)}€ por Bizum/Efectivo para saldar las cuentas?`
-                  : `¿Confirmas que tú le has pagado ${Math.abs(userABalance).toFixed(2)}€ a ${userB.name} por Bizum/Efectivo para saldar las cuentas?`
+                  ? `Â¿Confirmas que ${userB.name} te ha pagado ${Math.abs(userABalance).toFixed(2)}â‚¬ por Bizum/Efectivo para saldar las cuentas?`
+                  : `Â¿Confirmas que tÃº le has pagado ${Math.abs(userABalance).toFixed(2)}â‚¬ a ${userB.name} por Bizum/Efectivo para saldar las cuentas?`
                 }
               </p>
             </div>
@@ -440,19 +441,19 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
             <h2 className="text-2xl font-bold text-white mb-6">Configurar Presupuesto</h2>
             <form onSubmit={handleSaveBudget} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Categoría</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">CategorÃ­a</label>
                 <select 
                   value={budgetForm.category_id}
                   onChange={e => setBudgetForm({...budgetForm, category_id: e.target.value})}
                   required
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 transition-colors"
                 >
-                  <option value="">Seleccionar categoría...</option>
+                  <option value="">Seleccionar categorÃ­a...</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Límite Mensual (€)</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-1">LÃ­mite Mensual (â‚¬)</label>
                 <input 
                   type="number"
                   step="1"
@@ -476,7 +477,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                   type="submit"
                   className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-2 rounded-xl font-bold transition-colors"
                 >
-                  Guardar Límite
+                  Guardar LÃ­mite
                 </button>
               </div>
             </form>
