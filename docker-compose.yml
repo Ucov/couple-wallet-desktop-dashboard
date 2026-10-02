@@ -1,7 +1,13 @@
-services:
+﻿services:
   desktop-dashboard:
     build: .
     container_name: desktop-dashboard
     restart: unless-stopped
     ports:
       - "3006:80"
+    labels:
+      - homepage.group=Finanzas
+      - homepage.name=Panel Control
+      - homepage.icon=mdi-monitor-dashboard
+      - homepage.href=http://192.168.1.11:3006
+      - homepage.description=Vista global de finanzas en pareja
