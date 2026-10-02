@@ -175,7 +175,7 @@ export default function Overview() {
       const amountToSettle = Math.abs(stats.balance)
 
       await pb.collection('expenses').create({
-        concept: 'LiquidaciÃ³n de saldo',
+        concept: 'Liquidación de saldo',
         amount: amountToSettle,
         is_transfer: true,
         date: new Date().toISOString(),
@@ -229,7 +229,7 @@ export default function Overview() {
 
   if (loading) return <div className="text-zinc-500">Cargando resumen...</div>
 
-  const userA = profiles[0] || { id: user.id, name: 'TÃº', split: stats.mySplit }
+  const userA = profiles[0] || { id: user.id, name: 'Tú', split: stats.mySplit }
   const userB = profiles[1] || { id: 'unknown', name: 'Pareja', split: stats.partnerSplit }
 
   const userABalance = stats.balance
@@ -306,7 +306,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
           
           <div className="relative z-10 flex-1 overflow-y-auto pr-2 custom-scrollbar">
             {budgets.length === 0 ? (
-              <p className="text-xs text-zinc-500 text-center mt-4">No hay lÃ­mites establecidos.</p>
+              <p className="text-xs text-zinc-500 text-center mt-4">No hay límites establecidos.</p>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 {budgets.map(b => {
@@ -370,7 +370,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                       </div>
                       {forecastMsg && (
                         <p className={`${forecastClass} relative z-10`}>
-                           {projected > limit ? 'âš ï¸' : 'ðŸŽ¯'} {forecastMsg}
+                           {projected > limit ? '⚠️' : '🎯'} {forecastMsg}
                         </p>
                       )}
                     </div>
@@ -385,7 +385,7 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col h-[400px] hover:border-white/10 hover:bg-zinc-900/60 transition-all duration-300 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none transition-opacity group-hover:opacity-75 opacity-50"></div>
-          <h3 className="text-white font-bold mb-4 relative z-10 tracking-wide">EvoluciÃ³n de Gastos ({userA.name} vs {userB.name})</h3>
+          <h3 className="text-white font-bold mb-4 relative z-10 tracking-wide">Evolución de Gastos ({userA.name} vs {userB.name})</h3>
           <div className="flex-1 w-full h-full min-h-0 relative z-10">
             {chartData.length > 0 ? <ExpenseAreaChart data={chartData} userA={userA.name} userB={userB.name} /> : <p className="text-zinc-500 text-sm">No hay suficientes datos</p>}
           </div>
