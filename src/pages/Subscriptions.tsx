@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
@@ -27,7 +27,7 @@ export default function Subscriptions() {
     try {
       if (user?.couple_id) {
         const subs = await pb.collection('recurring_expenses').getFullList({
-          filter: couple_id = "",
+          filter: `couple_id = "${user.couple_id}"`,
           expand: 'category_id',
           requestKey: null
         })
@@ -192,17 +192,17 @@ export default function Subscriptions() {
               </div>
             )}
             {subscriptions.map(sub => (
-              <div key={sub.id} className={lex items-center justify-between p-6 rounded-2xl border transition-all }>
+              <div key={sub.id} className={`flex items-center justify-between p-6 rounded-2xl border transition-all ${!sub.is_paused ? 'bg-zinc-900 border-zinc-800 hover:border-zinc-700' : 'bg-zinc-950/50 border-zinc-900 opacity-75'}`}>
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => toggleStatus(sub)}
-                    className={p-4 rounded-2xl cursor-pointer hover:scale-105 transition-all active:scale-95 }
+                    className={`p-4 rounded-2xl cursor-pointer hover:scale-105 transition-all active:scale-95 ${!sub.is_paused ? 'bg-primary-950/50 text-primary-400 hover:bg-primary-900/50' : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-400'}`}
                     title={!sub.is_paused ? 'Pausar gasto' : 'Reanudar gasto'}
                   >
                     {!sub.is_paused ? <Pause size={24} /> : <Play size={24} />}
                   </button>
                   <div>
-                    <h3 className={ont-bold text-xl }>{sub.concept}</h3>
+                    <h3 className={`font-bold text-xl ${!sub.is_paused ? 'text-white' : 'text-zinc-600 line-through'}`}>{sub.concept}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded-md">
                         {sub.expand?.category_id?.name || 'Sin categoría'}
@@ -216,7 +216,7 @@ export default function Subscriptions() {
                 
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className={	ext-2xl font-black }>
+                    <p className={`text-2xl font-black ${!sub.is_paused ? 'text-white' : 'text-zinc-600'}`}>
                       {Number(sub.amount).toFixed(2)} €
                     </p>
                   </div>
