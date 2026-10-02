@@ -325,11 +325,11 @@ return <div className="text-red-500 font-bold p-4">Error fetching data: {(stats 
                   let forecastClass = ''
                   if (currentDay > 5 || spent >= limit) {
                     if (projected > limit && spent > 0) {
-                      forecastMsg = `Peligro: Proyección total de ${projected.toFixed(0)}€ a final de mes`
+                      forecastMsg = `Peligro: Proyección total de € a final de mes`
                       forecastClass = 'text-amber-500 text-[10px] mt-1 font-bold flex items-center gap-1'
                     } else if (spent > 0) {
                       const saved = limit - projected
-                      forecastMsg = `Vas genial: Proyección de ahorro de ${saved.toFixed(0)}€ a final de mes`
+                      forecastMsg = `Vas genial: Proyección de ahorro de € a final de mes`
                       forecastClass = 'text-primary-500 text-[10px] mt-1 flex items-center gap-1'
                     }
                   }
