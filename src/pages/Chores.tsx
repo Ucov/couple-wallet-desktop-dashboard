@@ -73,26 +73,34 @@ export default function Chores() {
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-lg">
-        <form onSubmit={handleAdd} className="flex gap-4 mb-8">
-          <input 
-            type="text" 
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Nueva tarea (ej. Limpiar cocina)" 
-            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
-          />
-          <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4">
-             <Star size={16} className="text-yellow-500 mr-2"/>
-             <input 
-              type="number" 
-              value={points}
-              onChange={e => setPoints(Number(e.target.value))}
-              className="w-16 bg-transparent text-white focus:outline-none"
+        <form onSubmit={handleAdd} className="flex flex-col gap-4 mb-8">
+          <div className="flex gap-4">
+            <input 
+              type="text" 
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Nueva tarea (ej. Limpiar cocina)" 
+              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary-500 transition-colors"
             />
+            <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4">
+               <Star size={16} className="text-yellow-500 mr-2"/>
+               <input 
+                type="number" 
+                value={points}
+                onChange={e => setPoints(Number(e.target.value))}
+                className="w-16 bg-transparent text-white focus:outline-none"
+              />
+            </div>
+            <button type="submit" className="flex items-center gap-2 bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-xl font-bold transition-colors">
+              <Plus size={20} /> Añadir
+            </button>
           </div>
-          <button type="submit" className="flex items-center gap-2 bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-xl font-bold transition-colors">
-            <Plus size={20} /> Añadir
-          </button>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors text-sm font-semibold">
+              <input type="checkbox" checked={isRecurring} onChange={e => setIsRecurring(e.target.checked)} className="accent-primary-500 w-4 h-4 cursor-pointer" />
+              Es una tarea Fija/Recurrente (siempre disponible)
+            </label>
+          </div>
         </form>
 
         <div className="space-y-3">
@@ -108,10 +116,14 @@ export default function Chores() {
                   <CheckSquare size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-white">{chore.title}</h3>
+                  <h3 className="font-bold text-lg text-white">
+                    {chore.title}
+                    {chore.is_done && <span className="text-sm font-normal text-emerald-400 ml-2">(Completada)</span>}
+                  </h3>
                   <div className="flex items-center gap-1 text-yellow-500 mt-1">
                     <Star size={12} fill="currentColor" />
                     <span className="text-xs font-bold">{chore.points} ptos</span>
+                    {chore.is_recurring && <span className="flex items-center gap-1 text-xs font-bold text-indigo-400 ml-3"><Repeat size={12} /> Fija</span>}
                   </div>
                 </div>
               </div>
