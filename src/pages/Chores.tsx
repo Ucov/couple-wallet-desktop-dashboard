@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { pb } from '@/lib/pocketbase'
 import { useOutletContext } from 'react-router-dom'
 import type { RecordModel } from 'pocketbase'
-import { CheckSquare, Trash2, Plus, Star } from 'lucide-react'
+import { CheckSquare, Trash2, Plus, Star, Repeat } from 'lucide-react'
 
 export default function Chores() {
   const { user } = useOutletContext<{ user: RecordModel }>()
@@ -10,6 +10,7 @@ export default function Chores() {
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [points, setPoints] = useState(1)
+  const [isRecurring, setIsRecurring] = useState(false)
 
   useEffect(() => {
     fetchChores()
@@ -49,12 +50,14 @@ export default function Chores() {
       const data = await pb.collection('chores').create({
         title,
         points: Number(points),
-        couple_id: user.couple_id
+        couple_id: user.couple_id,
+        is_recurring: isRecurring
       })
 
       setChores([data, ...chores])
       setTitle('')
-      setPoints(10)
+      setPoints(1)
+      setIsRecurring(false)
     } catch (err: any) {
       alert('Error: ' + err.message)
     }
